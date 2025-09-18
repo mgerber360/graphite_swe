@@ -11,10 +11,12 @@ def get_density(pop_file_name, area_file_name, FIPS):
           FIPS (str): The 5-digit FIPS code (state + county).
     Returns: float: Population density (people per square mile).
     """
-    pop_data = pd.read_csv(pop_file_name, dtype={'FIPStxt': str})
-    pop_data = pop_data.set_index('FIPStxt')
     area_data = pd.read_csv(area_file_name, dtype={'FIPS': str})
+    area_data['FIPS'] = area_data['FIPS'].str.zfill(5) # Ensure FIPS codes are 5 digits
     area_data = area_data.set_index('FIPS')
+    pop_data = pd.read_csv(pop_file_name, dtype={'FIPStxt': str})
+    pop_data['FIPStxt'] = pop_data['FIPStxt'].str.zfill(5)
+    pop_data = pop_data.set_index('FIPStxt')
     area = area_data.loc[FIPS, 'sq_mi']
     pop = pop_data.loc[FIPS]
     pop = pop[pop['Attribute'] == 'CENSUS_2020_POP']['Value'].values[0]    
@@ -55,7 +57,12 @@ def is_dense_area(departure_coords, destination_coords, pop_file_name='populatio
     """
     Determine if a given latitude and longitude is in a dense area based on population density threshold (1000 is commonly used as the upper-limit for rural areas).
 
-
+    Args: departure_coords (tuple): (latitude, longitude) for the departure location.
+          destination_coords (tuple): (latitude, longitude) for the destination location.
+          pop_file_name (str): Path to the CSV file containing population estimates.
+          area_file_name (str): Path to the CSV file containing county landmass data.
+          threshold (int): Population density threshold to classify as dense area.
+    Returns: bool: True if both departure and destination are in dense areas, False otherwise.
     """
     departure_FIPS = get_FIPS_code(departure_coords[0], departure_coords[1])
     destination_FIPS = get_FIPS_code(destination_coords[0], destination_coords[1])
